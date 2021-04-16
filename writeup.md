@@ -1,8 +1,8 @@
 # blursed
 输出一个随机生成的0x10字节字符串，然后输入0x30字节的数据，二者在栈上是连续的。
-![avatar](https://github.com/YmColdQiu/blursed-write-up/tree/main/pic/pow1.png)
+![avatar](./pic/pow1.png)
 共计0x40字节的数据放入`sub_43E2D0`中处理；在sub_43FAA0中看到一些常数，搜索得到两个结果`Sha512`和`blake2b`，两个算法使用同样的初始值；因为hash值的长度可自行设置，故为`blake2b`算法。
-![avatar](https://github.com/YmColdQiu/blursed-write-up/tree/main/pic/hash.png)
+![avatar](./pic/hash.png)
 对哈希后的结果进行判断，只有在前三个字节都为0时才可以继续执行。
 ```python
 from pwn import *
@@ -62,7 +62,7 @@ gef➤
 b'H\xc7\xc0\x01\x00\x00\x00\xeb\xf7'
 ```
 使用`seccomp-tools`查看规则
-![avatar](https://github.com/YmColdQiu/blursed-write-up/tree/main/pic/seccomp.png)
+![avatar](./pic/seccomp.png)
 
 首先，需要leak出`bozo.bin`从而了解其如何处理flag以及shellcode。由于mmap通常会从高到低分配连续的空间，所以bozo.bin的分配的空间会在RWX页的前面
 ```
@@ -139,7 +139,7 @@ call    sub_BE8
 该代码会随机的使用`0xffffffff`填充在我们的shellcode位置，使shellcode无法继续执行。
 
 解决问题的关键在于rdseed指令。
-![avatar](https://github.com/YmColdQiu/blursed-write-up/tree/main/pic/rdseed.png)
+![avatar](./pic/rdseed.png)
 该指令在被大量执行时，会发生错误，如果错误则会固定返回0；那么`sub_BE8`就不会将`0xffffffff`写入到我们的shellcode上了
 
 `seccomp`规则中提供了`clone`函数，可以使用该函数开启多个子进程反复调用`rdseed`指令，使其执行失败，从而完成对`flag`的遍历。
